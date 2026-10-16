@@ -1,0 +1,8 @@
+# Copy this file to .dev.vars for local wrangler dev
+GOOGLE_CSE_API_KEY=your_google_custom_search_api_key
+GOOGLE_CSE_CX=your_programmable_search_engine_id
+GOOGLE_PLACES_API_KEY=your_google_places_api_key
+GOOGLE_PAGESPEED_API_KEY=your_google_pagespeed_api_key
+SAM_GOV_API_KEY=your_sam_gov_api_key
+GITHUB_TOKEN=your_github_pat_token
+INGEST_WEBHOOK_SECRET=your_custom_webhook_secret
