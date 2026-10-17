@@ -81,6 +81,14 @@ npm run cf:deploy
 
 Wrangler prints the deployed Worker URL, typically ending in `.workers.dev`. Open it and test the app. If the build fails, do not continue to domain setup until the error is fixed.
 
+Current production URL: <https://tias-lab-ai-lead-finder.dhilip-raj3.workers.dev>
+
+Quick health check (should report `"mode":"LIVE_PRODUCTION_D1"`):
+
+```bash
+curl https://tias-lab-ai-lead-finder.dhilip-raj3.workers.dev/api/leads
+```
+
 ## 7. Attach your subdomain (example: leadfinder.tiaslab.in)
 
 1. In the Cloudflare dashboard, open **Workers & Pages**.
@@ -92,50 +100,58 @@ Wrangler prints the deployed Worker URL, typically ending in `.workers.dev`. Ope
 
 For a Worker custom domain, prefer the **Workers & Pages → Worker → Settings → Domains & Routes → Add Custom Domain** flow. Do not create a separate Pages project for this full-stack Next.js app. If Cloudflare asks you to create a DNS record manually, follow the exact target it displays rather than guessing a CNAME target.
 
-## 8. Auto-deploy on git push (GitHub Actions)
+## 8. Auto-deploy on git push (Cloudflare Workers Builds)
 
-Pushes to `main` are built and deployed to Cloudflare Workers automatically via
-`.github/workflows/deploy.yml`.
+Pushes to `main` are built and deployed automatically by **Cloudflare's git
+integration (Workers Builds)** — this project does **not** use GitHub Actions
+(there is no `.github/` directory). To connect or change the repository, open
+**Cloudflare dashboard → Workers & Pages → `tias-lab-ai-lead-finder` →
+Settings → Builds → Git repository → Manage**.
 
-### Required GitHub repository secrets
+Cloudflare runs two commands on every push to `main`:
 
-Add these in your GitHub repo → **Settings → Secrets and variables → Actions**:
+| Phase | Command | What it does |
+|-------|---------|--------------|
+| Build | `npm run build` | `next build`, then `postbuild` → `opennextjs-cloudflare build` |
+| Deploy | `npx wrangler deploy` | OpenNext detects the project and runs `opennextjs-cloudflare deploy` |
 
-| Secret | Value |
-|--------|-------|
-| `CLOUDFLARE_API_TOKEN` | A Cloudflare API token with `Workers Scripts:Edit` and `Workers KV Storage:Edit` (or use an API token with `Cloudflare Access:Edit`). Create one at **Cloudflare dashboard → My Profile → API Tokens → Create Token** (use the "Cloudflare API token" template, scoped to your account). |
-| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID (**Cloudflare dashboard → Workers & Pages → Overview**, right sidebar). |
+### Bindings come from `wrangler.toml`
 
-### Required Cloudflare setup (one-time)
+`wrangler.toml` is the **source of truth** for every deploy. The D1 binding,
+AI binding, assets and variables are all read from it, so the real
+`database_id` must be committed (see step 2). If the placeholder value is
+present, the deploy fails with:
 
-Before the first deploy succeeds, complete these in your Cloudflare account:
+```
+binding DB of type d1 must have a valid `database_id` specified [code: 10021]
+```
 
-1. **Create the D1 database** and paste its real ID into `wrangler.toml`:
-   ```bash
-   npx wrangler d1 create tias-lead-finder-db
-   ```
-   Then update `wrangler.toml`:
-   ```toml
-   [[d1_databases]]
-   binding = "DB"
-   database_name = "tias-lead-finder-db"
-   database_id = "PASTE_THE_REAL_D1_ID_HERE"
-   migrations_dir = "migrations"
-   ```
+### If a build fails
 
-2. **Apply the migration**:
+Check which commit the build checked out. A build launched from an older
+commit still uses the older `wrangler.toml`. To force a build of the current
+`main`, push any new commit (an empty commit works):
+
+```bash
+git commit --allow-empty -m "Trigger Cloudflare build"
+git push origin main
+```
+
+Then watch **Workers & Pages → `tias-lab-ai-lead-finder` → Deployments**.
+
+### One-time setup that must be done before the first git deploy
+
+1. **Create the D1 database** and put its real ID in `wrangler.toml` (step 2).
+2. **Apply the migration** (step 3):
    ```bash
    npx wrangler d1 migrations apply tias-lead-finder-db --remote
    ```
-
 3. **Add runtime secrets** (never commit these to Git):
    ```bash
    npx wrangler secret put GOOGLE_CSE_API_KEY
    npx wrangler secret put GOOGLE_CSE_CX
    npx wrangler secret put SAM_GOV_API_KEY
    ```
-
-After the above, every push to `main` triggers `npm run cf:build` + `wrangler deploy`.
 
 ## 9. Attach your subdomain (example: leadfinder.tiaslab.in)
 
