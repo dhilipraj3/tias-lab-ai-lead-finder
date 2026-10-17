@@ -1,6 +1,7 @@
 // src/app/api/sources/sync/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { LeadSourceConnector } from '@/lib/sources/types';
 import { HackerNewsFreelancerConnector } from '@/lib/sources/connectors/hn-algolia';
 import { RedditStartupFastWinConnector } from '@/lib/sources/connectors/reddit-buyers';
 import { GoogleCustomSearchIndiaConnector } from '@/lib/sources/connectors/google-cse-india';
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
   const db = typedEnv.DB;
 
   // Load built-in + unlimited user-registered connectors from D1 `data_sources`
-  const connectors = [
+  const connectors: LeadSourceConnector[] = [
     new HackerNewsFreelancerConnector(),
     new RedditStartupFastWinConnector(),
     new GoogleCustomSearchIndiaConnector(),
