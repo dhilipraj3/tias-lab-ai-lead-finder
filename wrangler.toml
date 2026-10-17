@@ -10,7 +10,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "tias-lead-finder-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "b7786fb4-7338-4478-8d01-de5f1906f90b"
 migrations_dir = "migrations"
 
 [ai]
