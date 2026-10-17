@@ -92,7 +92,59 @@ Wrangler prints the deployed Worker URL, typically ending in `.workers.dev`. Ope
 
 For a Worker custom domain, prefer the **Workers & Pages → Worker → Settings → Domains & Routes → Add Custom Domain** flow. Do not create a separate Pages project for this full-stack Next.js app. If Cloudflare asks you to create a DNS record manually, follow the exact target it displays rather than guessing a CNAME target.
 
-## 8. Protect the app before sharing it
+## 8. Auto-deploy on git push (GitHub Actions)
+
+Pushes to `main` are built and deployed to Cloudflare Workers automatically via
+`.github/workflows/deploy.yml`.
+
+### Required GitHub repository secrets
+
+Add these in your GitHub repo → **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|--------|-------|
+| `CLOUDFLARE_API_TOKEN` | A Cloudflare API token with `Workers Scripts:Edit` and `Workers KV Storage:Edit` (or use an API token with `Cloudflare Access:Edit`). Create one at **Cloudflare dashboard → My Profile → API Tokens → Create Token** (use the "Cloudflare API token" template, scoped to your account). |
+| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID (**Cloudflare dashboard → Workers & Pages → Overview**, right sidebar). |
+
+### Required Cloudflare setup (one-time)
+
+Before the first deploy succeeds, complete these in your Cloudflare account:
+
+1. **Create the D1 database** and paste its real ID into `wrangler.toml`:
+   ```bash
+   npx wrangler d1 create tias-lead-finder-db
+   ```
+   Then update `wrangler.toml`:
+   ```toml
+   [[d1_databases]]
+   binding = "DB"
+   database_name = "tias-lead-finder-db"
+   database_id = "PASTE_THE_REAL_D1_ID_HERE"
+   migrations_dir = "migrations"
+   ```
+
+2. **Apply the migration**:
+   ```bash
+   npx wrangler d1 migrations apply tias-lead-finder-db --remote
+   ```
+
+3. **Add runtime secrets** (never commit these to Git):
+   ```bash
+   npx wrangler secret put GOOGLE_CSE_API_KEY
+   npx wrangler secret put GOOGLE_CSE_CX
+   npx wrangler secret put SAM_GOV_API_KEY
+   ```
+
+After the above, every push to `main` triggers `npm run cf:build` + `wrangler deploy`.
+
+## 9. Attach your subdomain (example: leadfinder.tiaslab.in)
+
+1. In the Cloudflare dashboard, open **Workers & Pages**.
+2. Select the deployed Worker named `tias-lab-ai-lead-finder`.
+3. Open **Settings → Domains & Routes → Add Custom Domain**.
+4. Enter `leadfinder.tiaslab.in` and confirm.
+
+## 10. Protect the app before sharing it
 
 This project does not implement login. If only you or your team should use it, create a Cloudflare Zero Trust Access application for `leadfinder.tiaslab.in` and allow only your email addresses or organization identity. Test access to both the dashboard and `/api/*` routes. Do not expose the sync endpoint publicly without access control.
 

@@ -1,4 +1,6 @@
 // src/app/api/leads/[id]/route.ts
+/// <reference types="@cloudflare/workers-types" />
+import type { D1Database } from "@cloudflare/workers-types";
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
