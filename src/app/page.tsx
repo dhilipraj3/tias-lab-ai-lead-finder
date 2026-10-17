@@ -55,8 +55,8 @@ export default function TiasLabLeadFinderDashboard() {
   async function triggerServerSync() {
     setSyncMessage('Running server-side source connectors...');
     const res = await fetch('/api/sources/sync', { method: 'POST' });
-    const data = await res.json();
-    setSyncMessage(`Sync completed at ${data.syncedAt}`);
+    const data = (await res.json()) as { syncedAt?: string; results?: unknown };
+    setSyncMessage(`Sync completed at ${data.syncedAt ?? 'unknown'}`);
     await fetchLeads();
   }
 
