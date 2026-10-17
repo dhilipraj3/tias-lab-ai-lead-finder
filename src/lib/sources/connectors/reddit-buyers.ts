@@ -53,8 +53,7 @@ export class RedditStartupFastWinConnector implements LeadSourceConnector {
           country: 'Global / International',
           sourceUrl: `https://www.reddit.com${d.permalink}`,
           publishedAt: new Date(d.created_utc * 1000).toISOString().slice(0, 10),
-          rawText: `${d.title}. ${d.selftext.slice(0, 600)}`,
-          dealSegment: 'STARTUP_FAST_WIN'
+          rawText: `${d.title}. ${d.selftext.slice(0, 600)}`
         });
       }
     }
